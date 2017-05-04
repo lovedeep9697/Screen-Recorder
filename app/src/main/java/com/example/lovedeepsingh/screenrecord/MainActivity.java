@@ -1,6 +1,8 @@
 package com.example.lovedeepsingh.screenrecord;
 
 import android.Manifest;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -18,37 +20,42 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.NotificationCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.View;
+import android.widget.RemoteViews;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+import android.widget.VideoView;
 
 import java.io.IOException;
+
+import static com.example.lovedeepsingh.screenrecord.variable.DISPLAY_HEIGHT;
+import static com.example.lovedeepsingh.screenrecord.variable.DISPLAY_WIDTH;
+import static com.example.lovedeepsingh.screenrecord.variable.ORIENTATIONS;
+import static com.example.lovedeepsingh.screenrecord.variable.REQUEST_CODE;
+import static com.example.lovedeepsingh.screenrecord.variable.REQUEST_PERMISSIONS;
+import static com.example.lovedeepsingh.screenrecord.variable.mMediaProjection;
+import static com.example.lovedeepsingh.screenrecord.variable.mMediaProjectionCallback;
+import static com.example.lovedeepsingh.screenrecord.variable.mMediaRecorder;
+import static com.example.lovedeepsingh.screenrecord.variable.mProjectionManager;
+import static com.example.lovedeepsingh.screenrecord.variable.mScreenDensity;
+import static com.example.lovedeepsingh.screenrecord.variable.mVirtualDisplay;
+//import static com.example.lovedeepsingh.screenrecord.variable.toggle;
 
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String TAG = "MainActivity";
-    public static final int REQUEST_CODE=1000;
-    private int mScreenDensity;
-    private MediaProjectionManager mProjectionManager;
-    private static final int DISPLAY_WIDTH = 720;
-    private static final int DISPLAY_HEIGHT = 1280;
-    private MediaProjection mMediaProjection;
-    private VirtualDisplay mVirtualDisplay;
-    private MediaProjectionCallback mMediaProjectionCallback;
-    private ToggleButton mToggleButton;
-    private MediaRecorder mMediaRecorder;
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-    private static final int REQUEST_PERMISSIONS = 10;
+
+
 
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
-        ORIENTATIONS.append(Surface.ROTATION_90, 0);
-        ORIENTATIONS.append(Surface.ROTATION_180, 270);
+       ORIENTATIONS.append(Surface.ROTATION_90, 0);
+       ORIENTATIONS.append(Surface.ROTATION_180, 270);
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
@@ -56,16 +63,17 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        mScreenDensity = metrics.densityDpi;
+      mScreenDensity = metrics.densityDpi;
 
-        mMediaRecorder = new MediaRecorder();
+       mMediaRecorder = new MediaRecorder();
 
-        mProjectionManager = (MediaProjectionManager)getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-
-        mToggleButton = (ToggleButton)findViewById(R.id.toggleButton);
-        mToggleButton.setOnClickListener(new View.OnClickListener() {
+       mProjectionManager = (MediaProjectionManager)getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+        variable.toggle = (ToggleButton)findViewById(R.id.toggleButton); 
+       //variable.toggle = (ToggleButton)findViewById(R.id.toggleButton);
+        variable.toggle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(ContextCompat.checkSelfPermission(MainActivity.this,Manifest.permission.WRITE_EXTERNAL_STORAGE)+ContextCompat
@@ -73,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
                 {
                     if(ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,Manifest.permission.WRITE_EXTERNAL_STORAGE)||
                             ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,Manifest.permission.RECORD_AUDIO)) {
-                        mToggleButton.setChecked(false);
+                        variable.toggle.setChecked(false);
                         Snackbar.make(findViewById(android.R.id.content), R.string.label_permissions, Snackbar.LENGTH_INDEFINITE).setAction
                                 ("ENABLE", new View.OnClickListener() {
                                     @Override
@@ -95,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 else
                 {
-                    onToggleScreenShare(v);
+                    onToggleScreenShare(variable.toggle);
                 }
             }
         });
@@ -104,29 +112,46 @@ public class MainActivity extends AppCompatActivity {
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode != REQUEST_CODE) {
-            Log.e(TAG, "Unknown request code: " + requestCode);
+            Log.e(variable.TAG, "Unknown request code: " + requestCode);
             return;
         }
         if (resultCode != RESULT_OK) {
             Toast.makeText(this,
                     "Screen Cast Permission Denied", Toast.LENGTH_SHORT).show();
-            mToggleButton.setChecked(false);
+            variable.toggle.setChecked(false);
             return;
         }
-        mMediaProjectionCallback = new MediaProjectionCallback();
+               Intent reachedSafely_notification = new Intent(getApplicationContext(), nservice.class);
+        PendingIntent reachedSafely = PendingIntent.getService(getApplicationContext(), 0, reachedSafely_notification
+                , 0);
+
+
+        RemoteViews remoteView = new RemoteViews(getApplicationContext().getPackageName(), R.layout.rm);
+        remoteView.setOnClickPendingIntent(R.id.button, reachedSafely);
+
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
+        builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setSmallIcon(R.drawable.scr)
+                .setContent(remoteView);
+
+        NotificationManager notificationManageri = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManageri.notify(0, builder.build());
+
+       mMediaProjectionCallback = new MediaProjectionCallback();
         mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
-        mMediaProjection.registerCallback(mMediaProjectionCallback, null);
+       mMediaProjection.registerCallback(mMediaProjectionCallback, null);
         mVirtualDisplay = createVirtualDisplay();
         mMediaRecorder.start();
     }
     public void onToggleScreenShare(View view) {
-        if (((ToggleButton) view).isChecked()) {
+        if ((variable.toggle.isChecked())) {
             initRecorder();
             shareScreen();
         } else {
             mMediaRecorder.stop();
             mMediaRecorder.reset();
-            Log.v(TAG, "Stopping Recording");
+            Log.v(variable.TAG, "Stopping Recording");
             stopScreenSharing();
         }
     }
@@ -150,9 +175,10 @@ public class MainActivity extends AppCompatActivity {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
             mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            variable.i++;
             mMediaRecorder.setOutputFile(Environment
                     .getExternalStoragePublicDirectory(Environment
-                            .DIRECTORY_DOWNLOADS) + "/video.mp4");
+                            .DIRECTORY_DOWNLOADS) + "/"+String.valueOf(variable.i)+"video.mp4");
             mMediaRecorder.setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
             mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
             mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
@@ -167,20 +193,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class MediaProjectionCallback extends MediaProjection.Callback {
+    class MediaProjectionCallback extends MediaProjection.Callback {
         @Override
         public void onStop() {
-            if (mToggleButton.isChecked()) {
-                mToggleButton.setChecked(false);
+            if (variable.toggle.isChecked()) {
+                variable.toggle.setChecked(false);
                 mMediaRecorder.stop();
                 mMediaRecorder.reset();
-                Log.v(TAG, "Recording Stopped");
+                Log.v(variable.TAG, "Recording Stopped");
             }
             mMediaProjection = null;
             stopScreenSharing();
         }
     }
-    private void stopScreenSharing() {
+     static public void stopScreenSharing() {
         if (mVirtualDisplay == null) {
             return;
         }
@@ -193,13 +219,13 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         destroyMediaProjection();
     }
-    private void destroyMediaProjection() {
+    static private void destroyMediaProjection() {
         if (mMediaProjection != null) {
             mMediaProjection.unregisterCallback(mMediaProjectionCallback);
             mMediaProjection.stop();
             mMediaProjection = null;
         }
-        Log.i(TAG, "MediaProjection Stopped");
+        Log.i(variable.TAG, "MediaProjection Stopped");
     }
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String permissions[],
@@ -208,9 +234,9 @@ public class MainActivity extends AppCompatActivity {
             case REQUEST_PERMISSIONS: {
                 if ((grantResults.length > 0) && (grantResults[0] +
                         grantResults[1]) == PackageManager.PERMISSION_GRANTED) {
-                    onToggleScreenShare(mToggleButton);
+                    onToggleScreenShare(variable.toggle);
                 } else {
-                    mToggleButton.setChecked(false);
+                    variable.toggle.setChecked(false);
                     Snackbar.make(findViewById(android.R.id.content), R.string.label_permissions,
                             Snackbar.LENGTH_INDEFINITE).setAction("ENABLE",
                             new View.OnClickListener() {

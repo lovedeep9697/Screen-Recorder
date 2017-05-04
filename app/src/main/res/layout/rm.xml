@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+
+    android:layout_height="69dp">
+    <TextView
+    android:layout_width="220dp"
+        android:text="Recording ..."
+        android:textSize="30dp"
+        android:textColor="#000000"
+        android:gravity="center"
+        android:layout_weight="1"
+    android:layout_height="match_parent"
+    android:layout_margin="0dp"/>
+    <Button
+        android:layout_height="match_parent"
+        android:id="@+id/button"
+        android:text="STOP"
+        android:layout_weight="1"
+        android:layout_margin="0dp"
+        android:layout_width="100dp" />
+</LinearLayout>

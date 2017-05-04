@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
@@ -8,23 +9,34 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.example.lovedeepsingh.screenrecord.MainActivity">
+    tools:context="com.example.lovedeepsingh.screenrecord.MainActivity"
+    android:background="@android:color/darker_gray"
+    >
+
 
     <TextView
         android:text="Record Status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/toggleButton"
-        android:layout_alignEnd="@+id/toggleButton"
-        android:layout_marginBottom="120dp"
-        android:id="@+id/textView6" />
+        android:textSize="35dp"
+        android:id="@+id/textView6"
+        android:textColorLink="@android:color/white"
+        android:textColor="@android:color/black"
+        android:layout_marginTop="31dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
 
     <ToggleButton
         android:text="ToggleButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/toggleButton"
-        android:layout_marginTop="166dp"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true" />
+        android:background="@android:color/black"
+        android:layout_marginTop="86dp"
+        android:layout_alignTop="@+id/textView6"
+        android:layout_centerHorizontal="true"
+        android:textColor="@android:color/white"
+
+        />
+
 </RelativeLayout>
